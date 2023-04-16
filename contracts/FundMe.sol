@@ -6,21 +6,51 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./PriceConverter.sol";
 
 
-error NotOwner();
+error FundMe_NotOwner();
 
+/**
+ *@title A contract for crowd funding
+ *@author Salma Ahmed Ali
+ *@notice This contract is to demo a sample funding contract
+ *@dev This implements a price feeds as our library
+ */
 contract FundMe{
-      using PriceConverter for uint256;  //we're using it as a libirary on top of uint256 type 
-    uint256 public constant MINIMUM_USD =50 * 1e18;
+      
+    using PriceConverter for uint256;  //we're using it as a libirary on top of uint256 type 
 
     address[] public funders;
     mapping (address =>uint256) addressToAmountFunded;
     address public immutable i_owner;
+    uint256 public constant MINIMUM_USD =50 * 1e18;
     AggregatorV3Interface public priceFeed;
+
+    modifier onlyOwner{
+      //require(msg.sender == i_owner, "Sender is not owner!");
+      if(msg.sender!= i_owner){
+        revert FundMe_NotOwner();
+      }
+      _;
+      //underscore represent the rest of the code will call after this line
+    }
 
     constructor(address priceFeedAddress){
       i_owner = msg.sender;
       priceFeed= AggregatorV3Interface(priceFeedAddress) ;
     }
+
+    receive() external payable{
+      fund();
+    }
+    
+     fallback() external payable{
+      fund();
+    }
+
+    
+/**
+ *@notice This function fund this contract
+ *@dev This implements a price feeds as our library
+ */
 
     function fund() public payable{
       //How do we send ETH to this contract?
@@ -52,21 +82,8 @@ contract FundMe{
       require(callSuccess, "Didn't call success!");
     }
 
-    modifier onlyOwner{
-      //require(msg.sender == i_owner, "Sender is not owner!");
-      if(msg.sender!= i_owner){
-        revert NotOwner();
-      }
-      _;
-      //underscore represent the rest of the code will call after this line
-    }
-
-    receive() external payable{
-      fund();
-    }
     
-     fallback() external payable{
-      fund();
-    }
+
+    
 
 }
