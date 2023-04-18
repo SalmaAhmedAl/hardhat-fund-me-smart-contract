@@ -6,7 +6,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./PriceConverter.sol";
 
 
-error FundMe_NotOwner();
+error FundMe__NotOwner();
 
 /**
  *@title A contract for crowd funding
@@ -19,7 +19,7 @@ contract FundMe{
     using PriceConverter for uint256;  //we're using it as a libirary on top of uint256 type 
 
     address[] public funders;
-    mapping (address =>uint256) addressToAmountFunded;
+    mapping (address =>uint256) addressToAmountFunded;  //getAddressToAmountFunded
     address public immutable i_owner;
     uint256 public constant MINIMUM_USD =50 * 1e18;
     AggregatorV3Interface public priceFeed;
@@ -27,7 +27,7 @@ contract FundMe{
     modifier onlyOwner{
       //require(msg.sender == i_owner, "Sender is not owner!");
       if(msg.sender!= i_owner){
-        revert FundMe_NotOwner();
+        revert FundMe__NotOwner();
       }
       _;
       //underscore represent the rest of the code will call after this line
@@ -56,9 +56,9 @@ contract FundMe{
       //How do we send ETH to this contract?
       require(msg.value.getConversionRate(priceFeed) >= MINIMUM_USD, "Didn't send enough!");
       //18 decimal
-
-      funders.push(msg.sender);
       addressToAmountFunded[msg.sender] += msg.value;
+      funders.push(msg.sender);
+      
       
     }
 
