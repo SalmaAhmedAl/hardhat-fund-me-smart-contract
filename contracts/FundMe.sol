@@ -15,14 +15,24 @@ error FundMe__NotOwner();
  *@dev This implements a price feeds as our library
  */
 contract FundMe{
+  //Const & immutable
+  //constant variables are actually part of the contract's byte code itself
+  //Not in storage ..it's just a pointer to its value and doesn't take up storage slot.
+
+  //variables in functions don't get added to storage, get added in thier own memory data strucure and gets deleted after the function has finished running
+  //Arrays & Mapping can take up a lot more space.
+
+  //Gas is calculated by this opcodes
+  //To see how much it costs for each one
+
       
     using PriceConverter for uint256;  //we're using it as a libirary on top of uint256 type 
 
-    address[] public funders;
-    mapping (address =>uint256) addressToAmountFunded;  //getAddressToAmountFunded
+    address[] public s_funders;
+    mapping (address =>uint256) s_addressToAmountFunded;  //getAddressToAmountFunded
     address public immutable i_owner;
     uint256 public constant MINIMUM_USD =50 * 1e18;
-    AggregatorV3Interface public priceFeed;
+    AggregatorV3Interface public s_priceFeed;
 
     modifier onlyOwner{
       //require(msg.sender == i_owner, "Sender is not owner!");
@@ -35,7 +45,7 @@ contract FundMe{
 
     constructor(address priceFeedAddress){
       i_owner = msg.sender;
-      priceFeed= AggregatorV3Interface(priceFeedAddress) ;
+      s_priceFeed= AggregatorV3Interface(priceFeedAddress) ;
     }
 
     receive() external payable{
@@ -54,22 +64,22 @@ contract FundMe{
 
     function fund() public payable{
       //How do we send ETH to this contract?
-      require(msg.value.getConversionRate(priceFeed) >= MINIMUM_USD, "Didn't send enough!");
+      require(msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD, "Didn't send enough!");
       //18 decimal
-        addressToAmountFunded[msg.sender] += msg.value;
-        funders.push(msg.sender);
+        s_addressToAmountFunded[msg.sender] += msg.value;
+        s_funders.push(msg.sender);
       
       
     }
 
     function withDraw() public onlyOwner{
-      for(uint256 funderIndex=0 ; funderIndex< funders.length ; funderIndex=funderIndex+1 ){
-           address funder = funders[funderIndex];
-           addressToAmountFunded[funder] =0;
+      for(uint256 funderIndex=0 ; funderIndex< s_funders.length ; funderIndex=funderIndex+1 ){
+           address funder = s_funders[funderIndex];
+           s_addressToAmountFunded [funder] =0;
       }
 
       //reset an array
-      funders = new address[](0);
+      s_funders = new address[](0);
 
       // actually withdraw the funds through 3 waaays
       // trasfer
@@ -86,8 +96,20 @@ contract FundMe{
         require(callSuccess, "Call failed");
     }
 
-    
-
-    
-
+    function cheapWithdraw() public payable onlyOwner(){
+      address [] memory funders = s_funders; //saved a storage value into a memory value, we can read and write from this memory var, much much cheaper and then update storage when you're done
+      //mappings can't be in memory
+      for (
+            uint256 funderIndex = 0;
+            funderIndex < funders.length;
+            funderIndex++
+        ) {
+            address funder = funders[funderIndex];
+            s_addressToAmountFunded[funder] = 0;
+        }
+        s_funders = new address[](0);
+        // payable(msg.sender).transfer(address(this).balance);
+        (bool success, ) = i_owner.call{value: address(this).balance}("");
+        require(success);
+    }
 }

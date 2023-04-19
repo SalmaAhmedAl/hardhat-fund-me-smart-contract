@@ -25,7 +25,7 @@ describe("FundMe", async function () {
 
     describe("constructor", async function () {
         it("sets the aggregator addresses correctly", async function () {
-            const response = await fundMe.priceFeed()
+            const response = await fundMe.s_priceFeed()
             assert.equal(response, mockV3Aggregator.address)
         })
     })
@@ -37,13 +37,13 @@ describe("FundMe", async function () {
 
         it("Updated the amount funded data structure", async function () {
             await fundMe.fund({ value: sendValue })
-            // const response = await fundMe.addressToAmountFunded(deployer)
+            // const response = await fundMe.s_addressToAmountFunded(deployer)
             // assert(response.toString(), sendValue.toString())
         })
 
-        it("Adds funder to array of funders", async function () {
+        it("Adds funder to array of s_funders", async function () {
             await fundMe.fund({ value: sendValue })
-            const funder = await fundMe.funders(0)
+            const funder = await fundMe.s_funders(0)
             assert.equal(funder, deployer)
         })
     })
@@ -82,7 +82,7 @@ describe("FundMe", async function () {
             )
         })
 
-        it("allows us to withdraw with multiple funders", async function () {
+        it("allows us to withdraw with multiple s_funders", async function () {
             const accounts = await ethers.getSigners()// get all accounts and fund them
             for (let i = 1; i < 6; i++) { 
                 const fundMeConnectContract = await fundMe.connect(accounts[i]) //because for now fundMe contract is connected to deployer
@@ -111,22 +111,90 @@ describe("FundMe", async function () {
                 startingDeployerBalance.add(startingFundMeBalance).toString(),
                 endingDeployerBalance.add(gasCost).toString()
             )
-            //Make sure that funders(funders array) reset properly
-           // await expect(fundMe.funders[0]).to.be.reverted //This should be revert
+            //Make sure that s_funders(s_funders array) reset properly
+           // await expect(fundMe.s_funders[0]).to.be.reverted //This should be revert
             
-            ///I wanna loop through all these accounts and make sure that in our mapping (addressToAmountFunded) are zero
+            ///I wanna loop through all these accounts and make sure that in our mapping (s_addressToAmountFunded) are zero
             for( i =1; i<6; i++){
-                //assert.equal(await fundMe.addressToAmountFunded(accounts[i].address), 0) //Make sure that all mapping correctly updated to zero
+                //assert.equal(await fundMe.s_addressToAmountFunded(accounts[i].address), 0) //Make sure that all mapping correctly updated to zero
             }
         })
 
-        //Test that our only owner modifier is working
-        it("Only allow the owner to withdraw", async function(){
+        //Test that our only i_owner modifier is working
+        it("Only allow the i_owner to withdraw", async function(){
         const accounts = await ethers.getSigners()
         const attacker = accounts[1]  //random attacker
        const attackerConnectedContract = await fundMe.connect(attacker) //connect this attacker to a new contract 
        await expect(attackerConnectedContract.withDraw()).to.be.reverted //they should not able to withDraw
-       })// After this test >>>This means that when some other account tries to call withDraw, automatically gets reverted 
+      })// After this test >>>This means that when some other account tries to call withDraw, automatically gets reverted 
+
+      it("CheaperWithDraw testing...", async function () {
+        const accounts = await ethers.getSigners()// get all accounts and fund them
+        for (let i = 1; i < 6; i++) { 
+            const fundMeConnectContract = await fundMe.connect(accounts[i]) //because for now fundMe contract is connected to deployer
+            await fundMeConnectContract.fund({value:sendValue })
+        }
+            const startingFundMeBalance = await fundMe.provider.getBalance(
+                fundMe.address
+            ) //We get balance after it's been funded with some ETH
+            const startingDeployerBalance = await fundMe.provider.getBalance(
+                deployer
+            ) //It's going to be of type a big number && big number is an OBJECT
+            //Act
+            const transactionResponse = await fundMe.cheapWithdraw()
+            const transactionReceipt = await transactionResponse.wait(1)
+            const { gasUsed, effectiveGasPrice } = transactionReceipt
+            const gasCost = gasUsed.mul(effectiveGasPrice)
+            const endingFundMeBalance = await fundMe.provider.getBalance(
+                fundMe.address
+            )
+            const endingDeployerBalance = await fundMe.provider.getBalance(
+                deployer
+            )
+            //Assert
+            assert.equal(endingFundMeBalance, 0)
+            assert.equal(
+            startingDeployerBalance.add(startingFundMeBalance).toString(),
+            endingDeployerBalance.add(gasCost).toString()
+        )
+        //Make sure that s_s_funders(s_s_funders array) reset properly
+       // await expect(fundMe.s_s_funders[0]).to.be.reverted //This should be revert
+        
+        ///I wanna loop through all these accounts and make sure that in our mapping (s_addressToAmountFunded) are zero
+        for( i =1; i<6; i++){
+            //assert.equal(await fundMe.s_addressToAmountFunded(accounts[i].address), 0) //Make sure that all mapping correctly updated to zero
+        }
+    })
+
+    it("CheaperWithDraw ETH from a single funder", async function () {
+        //Arrange
+        const startingFundMeBalance = await fundMe.provider.getBalance(
+            fundMe.address
+        ) //We get balance after it's been funded with some ETH
+        const startingDeployerBalance = await fundMe.provider.getBalance(
+            deployer
+        ) //It's going to be of type a big number && big number is an OBJECT
+        //Act
+        const transactionResponse = await fundMe.cheapWithdraw()
+        const transactionReceipt = await transactionResponse.wait(1)
+        const { gasUsed, effectiveGasPrice } = transactionReceipt
+        const gasCost = gasUsed.mul(effectiveGasPrice)
+        const endingFundMeBalance = await fundMe.provider.getBalance(
+            fundMe.address
+        )
+        const endingDeployerBalance = await fundMe.provider.getBalance(
+            deployer
+        )
+        //gasCost ...We can get it from transaction receipt
+
+        //Assert
+        //Now>>We should be able to check to see that the entire fundMe balance has been added to the deployer balance
+        assert.equal(endingFundMeBalance, 0)
+        assert.equal(
+            startingDeployerBalance.add(startingFundMeBalance).toString(),
+            endingDeployerBalance.add(gasCost).toString()
+        )
+    })
     })
 })
 //We want to make sure that all money went to the right places
