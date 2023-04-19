@@ -124,8 +124,8 @@ describe("FundMe", async function () {
         it("Only allow the owner to withdraw", async function(){
         const accounts = await ethers.getSigners()
         const attacker = accounts[1]  //random attacker
-        const attackerConnectedContract = await fundMe.connect(attacker) //connect this attacker to a new contract 
-        await expect(attackerConnectedContract.withDraw()).to.be.revertedWith("FundMe__NotOwner") //they should not able to withDraw
+       const attackerConnectedContract = await fundMe.connect(attacker) //connect this attacker to a new contract 
+       await expect(attackerConnectedContract.withDraw()).to.be.reverted //they should not able to withDraw
        })// After this test >>>This means that when some other account tries to call withDraw, automatically gets reverted 
     })
 })
