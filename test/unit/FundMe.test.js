@@ -63,7 +63,7 @@ describe("FundMe", async function () {
             //Act
             const transactionResponse = await fundMe.withDraw()
             const transactionReceipt = await transactionResponse.wait(1)
-            const {gasUsed, effectiveGasPrice}= transactionReceipt
+            const { gasUsed, effectiveGasPrice } = transactionReceipt
             const gasCost = gasUsed.mul(effectiveGasPrice)
             const endingFundMeBalance = await fundMe.provider.getBalance(
                 fundMe.address
@@ -72,7 +72,7 @@ describe("FundMe", async function () {
                 deployer
             )
             //gasCost ...We can get it from transaction receipt
-             
+
             //Assert
             //Now>>We should be able to check to see that the entire fundMe balance has been added to the deployer balance
             assert.equal(endingFundMeBalance, 0)
@@ -80,8 +80,53 @@ describe("FundMe", async function () {
                 startingDeployerBalance.add(startingFundMeBalance).toString(),
                 endingDeployerBalance.add(gasCost).toString()
             )
-
         })
+
+        it("allows us to withdraw with multiple funders", async function () {
+            const accounts = await ethers.getSigners()// get all accounts and fund them
+            for (let i = 1; i < 6; i++) { 
+                const fundMeConnectContract = await fundMe.connect(accounts[i]) //because for now fundMe contract is connected to deployer
+                await fundMeConnectContract.fund({value:sendValue })
+            }
+                const startingFundMeBalance = await fundMe.provider.getBalance(
+                    fundMe.address
+                ) //We get balance after it's been funded with some ETH
+                const startingDeployerBalance = await fundMe.provider.getBalance(
+                    deployer
+                ) //It's going to be of type a big number && big number is an OBJECT
+                //Act
+                const transactionResponse = await fundMe.withDraw()
+                const transactionReceipt = await transactionResponse.wait(1)
+                const { gasUsed, effectiveGasPrice } = transactionReceipt
+                const gasCost = gasUsed.mul(effectiveGasPrice)
+                const endingFundMeBalance = await fundMe.provider.getBalance(
+                    fundMe.address
+                )
+                const endingDeployerBalance = await fundMe.provider.getBalance(
+                    deployer
+                )
+                //Assert
+                assert.equal(endingFundMeBalance, 0)
+                assert.equal(
+                startingDeployerBalance.add(startingFundMeBalance).toString(),
+                endingDeployerBalance.add(gasCost).toString()
+            )
+            //Make sure that funders(funders array) reset properly
+           // await expect(fundMe.funders[0]).to.be.reverted //This should be revert
+            
+            ///I wanna loop through all these accounts and make sure that in our mapping (addressToAmountFunded) are zero
+            for( i =1; i<6; i++){
+                //assert.equal(await fundMe.addressToAmountFunded(accounts[i].address), 0) //Make sure that all mapping correctly updated to zero
+            }
+        })
+
+        //Test that our only owner modifier is working
+        it("Only allow the owner to withdraw", async function(){
+        const accounts = await ethers.getSigners()
+        const attacker = accounts[1]  //random attacker
+        const attackerConnectedContract = await fundMe.connect(attacker) //connect this attacker to a new contract 
+        await expect(attackerConnectedContract.withDraw()).to.be.revertedWith("FundMe__NotOwner") //they should not able to withDraw
+       })// After this test >>>This means that when some other account tries to call withDraw, automatically gets reverted 
     })
 })
 //We want to make sure that all money went to the right places
