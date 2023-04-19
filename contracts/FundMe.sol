@@ -56,8 +56,8 @@ contract FundMe{
       //How do we send ETH to this contract?
       require(msg.value.getConversionRate(priceFeed) >= MINIMUM_USD, "Didn't send enough!");
       //18 decimal
-      addressToAmountFunded[msg.sender] += msg.value;
-      funders.push(msg.sender);
+        addressToAmountFunded[msg.sender] += msg.value;
+        funders.push(msg.sender);
       
       
     }
@@ -76,10 +76,14 @@ contract FundMe{
       //payable(msg.sender).trasfer(address(this).balance);
       //send 
       //bool sendSuccess = payable(msg.sender).send(address(this).balance);
-     // require(sendSuccess, "Didn't send success!")
+      // require(sendSuccess, "Didn't send success!")
       //call
-       (bool callSuccess, ) = payable(msg.sender).call{value: address(this).balance}("");
-      require(callSuccess, "Didn't call success!");
+
+      // payable(msg.sender).transfer(address(this).balance);
+        (bool callSuccess, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
+        require(callSuccess, "Call failed");
     }
 
     
