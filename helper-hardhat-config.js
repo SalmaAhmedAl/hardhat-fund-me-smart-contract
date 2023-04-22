@@ -1,6 +1,6 @@
 // if you a network A use an address Z .... if you a network X use an address Y
 const networkConfig = {
- /*THIS IS A CHAINID*/   
+    /*THIS IS A CHAINID*/
     31337: {
         name: "localhost",
     },
@@ -12,11 +12,11 @@ const networkConfig = {
 }
 //specify which chains are gonna be my development chain
 const developmentChains = ["hardhat", "localhost"]
-const DECIMALS=8
-const INITIAL_ANSWER= 200000000000
-module.exports={
+const DECIMALS = 8
+const INITIAL_ANSWER = 200000000000
+module.exports = {
     networkConfig,
     developmentChains,
     DECIMALS,
-    INITIAL_ANSWER
+    INITIAL_ANSWER,
 }
