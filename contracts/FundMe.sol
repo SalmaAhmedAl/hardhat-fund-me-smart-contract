@@ -28,11 +28,11 @@ contract FundMe{
       
     using PriceConverter for uint256;  //we're using it as a libirary on top of uint256 type 
 
-    address[] public s_funders;
-    mapping (address =>uint256) s_addressToAmountFunded;  //getAddressToAmountFunded
-    address public immutable i_owner;
+    address[] private s_funders;
+    mapping (address =>uint256) private s_addressToAmountFunded;  //getAddressToAmountFunded
+    address private immutable i_owner;
     uint256 public constant MINIMUM_USD =50 * 1e18;
-    AggregatorV3Interface public s_priceFeed;
+    AggregatorV3Interface private s_priceFeed;
 
     modifier onlyOwner{
       //require(msg.sender == i_owner, "Sender is not owner!");
@@ -111,5 +111,21 @@ contract FundMe{
         // payable(msg.sender).transfer(address(this).balance);
         (bool success, ) = i_owner.call{value: address(this).balance}("");
         require(success);
+    }
+
+    function getOwner() public view returns (address){
+      return i_owner;
+    }
+
+    function getFunder(uint256 index) public view returns(address){
+      return s_funders[index];
+    }
+
+    function getAddressToAmountFunded(address funder) public view returns(uint256){
+      return s_addressToAmountFunded[funder];
+    }
+
+    function getPriceFeed() public view returns (AggregatorV3Interface){
+      return s_priceFeed;
     }
 }

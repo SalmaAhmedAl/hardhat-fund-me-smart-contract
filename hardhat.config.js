@@ -66,7 +66,7 @@ module.exports = {
     currency:"USD",
     outputFile:"gas_report.txt",
     //coinmarketcap:COINMARKETCAP_API_KEY,
-    token:"BNB"
+    token:"ETH"
   },
   namedAccounts: {
     deployer: {

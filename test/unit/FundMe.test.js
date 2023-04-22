@@ -25,7 +25,7 @@ describe("FundMe", async function () {
 
     describe("constructor", async function () {
         it("sets the aggregator addresses correctly", async function () {
-            const response = await fundMe.s_priceFeed()
+            const response = await fundMe.getPriceFeed()
             assert.equal(response, mockV3Aggregator.address)
         })
     })
@@ -37,13 +37,13 @@ describe("FundMe", async function () {
 
         it("Updated the amount funded data structure", async function () {
             await fundMe.fund({ value: sendValue })
-            // const response = await fundMe.s_addressToAmountFunded(deployer)
-            // assert(response.toString(), sendValue.toString())
+            const response = await fundMe.getAddressToAmountFunded(deployer)
+            assert(response.toString(), sendValue.toString())
         })
 
-        it("Adds funder to array of s_funders", async function () {
+        it("Adds funder to array of getFunder", async function () {
             await fundMe.fund({ value: sendValue })
-            const funder = await fundMe.s_funders(0)
+            const funder = await fundMe.getFunder(0)
             assert.equal(funder, deployer)
         })
     })
@@ -82,7 +82,7 @@ describe("FundMe", async function () {
             )
         })
 
-        it("allows us to withdraw with multiple s_funders", async function () {
+        it("allows us to withdraw with multiple getFunder", async function () {
             const accounts = await ethers.getSigners()// get all accounts and fund them
             for (let i = 1; i < 6; i++) { 
                 const fundMeConnectContract = await fundMe.connect(accounts[i]) //because for now fundMe contract is connected to deployer
@@ -111,17 +111,17 @@ describe("FundMe", async function () {
                 startingDeployerBalance.add(startingFundMeBalance).toString(),
                 endingDeployerBalance.add(gasCost).toString()
             )
-            //Make sure that s_funders(s_funders array) reset properly
-           // await expect(fundMe.s_funders[0]).to.be.reverted //This should be revert
+            //Make sure that getFunder(getFunder array) reset properly
+            await expect(fundMe.getFunder[0]).to.be.reverted //This should be revert
             
-            ///I wanna loop through all these accounts and make sure that in our mapping (s_addressToAmountFunded) are zero
+            ///I wanna loop through all these accounts and make sure that in our mapping (getAddressToAmountFunded) are zero
             for( i =1; i<6; i++){
-                //assert.equal(await fundMe.s_addressToAmountFunded(accounts[i].address), 0) //Make sure that all mapping correctly updated to zero
+                assert.equal(await fundMe.getAddressToAmountFunded(accounts[i].address), 0) //Make sure that all mapping correctly updated to zero
             }
         })
 
-        //Test that our only i_owner modifier is working
-        it("Only allow the i_owner to withdraw", async function(){
+        //Test that our only getOwner modifier is working
+        it("Only allow the getOwner to withdraw", async function(){
         const accounts = await ethers.getSigners()
         const attacker = accounts[1]  //random attacker
        const attackerConnectedContract = await fundMe.connect(attacker) //connect this attacker to a new contract 
@@ -157,12 +157,12 @@ describe("FundMe", async function () {
             startingDeployerBalance.add(startingFundMeBalance).toString(),
             endingDeployerBalance.add(gasCost).toString()
         )
-        //Make sure that s_s_funders(s_s_funders array) reset properly
-       // await expect(fundMe.s_s_funders[0]).to.be.reverted //This should be revert
+        //Make sure that getFunder(getFunder array) reset properly
+       // await expect(fundMe.getFunder[0]).to.be.reverted //This should be revert
         
-        ///I wanna loop through all these accounts and make sure that in our mapping (s_addressToAmountFunded) are zero
+        ///I wanna loop through all these accounts and make sure that in our mapping (getAddressToAmountFunded) are zero
         for( i =1; i<6; i++){
-            //assert.equal(await fundMe.s_addressToAmountFunded(accounts[i].address), 0) //Make sure that all mapping correctly updated to zero
+            assert.equal(await fundMe.getAddressToAmountFunded(accounts[i].address), 0) //Make sure that all mapping correctly updated to zero
         }
     })
 
